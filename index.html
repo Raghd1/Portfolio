@@ -169,6 +169,7 @@ img{max-width:100%;height:auto;display:block}
 .pl-word{
   font-family:var(--display);font-weight:900;font-size:clamp(2.5rem,10vw,6rem);
   letter-spacing:-.04em;text-transform:uppercase;color:var(--fg);transform:translateY(110%);
+  white-space:nowrap;   /* the stage clips overflow — never let it wrap */
 }
 .pl-word.in{animation:wordIn .75s var(--ease-out) forwards}
 .pl-word.out{animation:wordOut .55s var(--ease) forwards}
@@ -538,8 +539,34 @@ img{max-width:100%;height:auto;display:block}
   .proj{grid-template-columns:1fr auto;gap:var(--s-2)}
   .proj__no{display:none}
 }
+/* ── PHONE ONLY — desktop and tablet keep their current layout ──
+   The decorative vertical grid is dropped and the hero stops
+   stretching to a full screen, so the rhythm matches the rest
+   of the page instead of leaving a large gap above the footer. */
+@media (max-width:600px){
+  .hero::before{display:none}          /* the vertical lines */
+
+  .hero{
+    min-height:auto;
+    padding-top:calc(4.5rem + var(--s-4));
+    padding-bottom:var(--s-4);
+  }
+  .hero__eyebrow{padding-bottom:var(--s-3);margin-bottom:var(--s-3)}
+  .hero__name{margin-bottom:var(--s-3)}
+  .hero__grid{gap:var(--s-3)}
+  .hero__foot{margin-top:var(--s-4);padding-top:var(--s-2)}
+  .hero .facts{margin-top:var(--s-1)}
+
+  /* one consistent section rhythm everywhere below the hero */
+  .band{padding-block:var(--s-5)}
+  .band__head{margin-bottom:var(--s-4)}
+  .skillrow,.proj{padding-block:var(--s-2)}
+  .about,.contact{gap:var(--s-4)}
+  .about__lede{margin-bottom:var(--s-3)}
+  .directs{margin-top:var(--s-3)}
+}
+
 @media (max-width:480px){
-  .hero::before{background-size:50% 100%}
   .proj__yr{display:none}
   .btn{width:100%;justify-self:stretch}
 }
@@ -576,7 +603,8 @@ img{max-width:100%;height:auto;display:block}
 
 <!-- ══ PRELOADER ═══════════════════════════════════════════ -->
 <div id="preloader" role="status" aria-live="polite" aria-label="Loading">
-  <div class="pl-word-stage"><div class="pl-word" id="pl-word">CRAFT</div></div>
+  <!-- Reads as one sentence: THIS IS → RAGHAD → Front-End & Back-End Developer -->
+  <div class="pl-word-stage"><div class="pl-word" id="pl-word">THIS IS</div></div>
   <div class="pl-identity" id="pl-identity" aria-hidden="true">
     <div class="pl-name" id="pl-name"></div>
     <div class="pl-rule" id="pl-rule"></div>
@@ -1013,8 +1041,9 @@ img{max-width:100%;height:auto;display:block}
   function runPreloader(){
     var chars=plName.querySelectorAll(".pl-char"), T=0;
     function at(ms,fn){ setTimeout(fn,ms); }
-    at(T += 120, function(){ plWord.classList.add("in"); });
-    at(T += 900, function(){ plWord.classList.add("out"); });
+    at(T += 120,  function(){ plWord.classList.add("in"); });
+    /* a two-word phrase needs a beat longer on screen than one word */
+    at(T += 1150, function(){ plWord.classList.add("out"); });
     at(T += 420, function(){
       plIdent.classList.add("in");
       Array.prototype.forEach.call(chars, function(c,i){
@@ -1111,10 +1140,17 @@ img{max-width:100%;height:auto;display:block}
       Array.prototype.forEach.call(titles,  function(el){ el.classList.add("in"); });
       return;
     }
-    Array.prototype.forEach.call(document.querySelectorAll(".skillrow, .proj, .fact, .directs li"), function(el,i){
-      el.setAttribute("data-stagger","");
-      el.style.transitionDelay=((i%8)*55)+"ms";
-    });
+    /* Only stagger things that live INSIDE a [data-reveal] block.
+       Without this scope the hero's own .fact rows were given
+       opacity:0 with nothing that could ever reveal them — they
+       were invisible on every device, leaving a 200px hole. */
+    Array.prototype.forEach.call(
+      document.querySelectorAll("[data-reveal] .skillrow, [data-reveal] .proj, [data-reveal] .fact, [data-reveal] .directs li"),
+      function(el,i){
+        el.setAttribute("data-stagger","");
+        el.style.transitionDelay=((i%8)*55)+"ms";
+      }
+    );
     var io=new IntersectionObserver(function(entries){
       entries.forEach(function(en){
         if(en.isIntersecting){ en.target.classList.add("in"); io.unobserve(en.target); }
