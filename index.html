@@ -1271,13 +1271,21 @@ img{max-width:100%;height:auto;display:block}
     fetch(ENDPOINT, {
       method:"POST",
       headers:{ "Content-Type":"application/json", "Accept":"application/json" },
+      /* FormSubmit rejects requests with no Referer, replying
+         "FormSubmit will not work in pages browsed as HTML files".
+         Browsers now default to strict-origin-when-cross-origin,
+         which strips the referrer from this cross-origin fetch — so
+         a correctly hosted page still got rejected. Sending the full
+         URL fixes it; _url repeats it inside the message body. */
+      referrerPolicy: "unsafe-url",
       body: JSON.stringify({
         name: name,
         email: mail,
         message: msg,
         _subject: "Portfolio enquiry — " + name,
         _template: "table",
-        _captcha: "false"
+        _captcha: "false",
+        _url: (window.location.origin + window.location.pathname).slice(0,200)
       })
     })
     .then(function(res){
